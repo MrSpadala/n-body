@@ -89,15 +89,15 @@ func simInit() [n_bodies]body {
         panic("divisible by 5")
     }
     // Line
-    /*for i := 0; i < n_bodies; i++ {
+    for i := 0; i < n_bodies; i++ {
         bodies[i] = body{x: offset + step*float64(i), y: offset, mass: 1.0}
-    }*/
+    }
     // Square
-    for i := 0; i < 5; i++ {
+    /*for i := 0; i < 5; i++ {
         for j := 0; j < n_bodies / 5; j++ {
             bodies[i + j*5] = body{x: (offset + step*float64(j))/4, y: offset + step*float64(i), mass: 1.0}
         }
-    }
+    }*/
     return bodies
 }
 
@@ -151,9 +151,10 @@ func calcGravity(indices chan int, bodies *[n_bodies]body, bodies_next *[n_bodie
         }
         bodies_next[i_body] = bodies[i_body].copy()
         b := &bodies_next[i_body]
-        // Update gravity acceleration
-        b.ax += fx / b.mass
-        b.ay += fy / b.mass
+
+        // Update force on body
+        b.ax = fx / b.mass
+        b.ay = fy / b.mass
         // Update velocity
         b.vx += b.ax * sim_step
         b.vy += b.ay * sim_step
