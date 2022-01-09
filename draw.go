@@ -39,6 +39,7 @@ func drawStep(i_step uint64, worker_c chan bool, x_start float64, x_end float64,
 	defer func() { worker_c <- true }()
 
 	stepFpath := "output/steps/" + strconv.FormatUint(i_step, 10) + ".json"
+	fmt.Println("Rendering step", i_step)
 	file, err := os.Open(stepFpath)
 	if err != nil {
 		panic("err in open file for reading")
@@ -74,12 +75,16 @@ func drawStep(i_step uint64, worker_c chan bool, x_start float64, x_end float64,
 		x := int(float64(w) * (body.X - x_start) / x_end)
 		y := h - int(float64(h)*(body.Y-y_start)/y_end)
 
-		for dx := -body_size; dx < body_size; dx++ {
-			for dy := -body_size; dy < body_size; dy++ {
+		for dx := -body_size; dx <= body_size; dx++ {
+			for dy := -body_size; dy <= body_size; dy++ {
 				if i_body == 0 {
+					img.Set(x+dx, y+dy, color.RGBA{0xff, 0xff, 0x0, 0xff})
+				} else if i_body == 1 {
+					img.Set(x+dx, y+dy, color.RGBA{0x0, 0xff, 0x0, 0xff})
+				} else if i_body == 2 {
 					img.Set(x+dx, y+dy, color.RGBA{0xff, 0x0, 0x0, 0xff})
 				} else {
-					img.Set(x+dx, y+dy, color.White)
+					//img.Set(x+dx, y+dy, color.White)
 				}
 			}
 		}

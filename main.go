@@ -13,7 +13,7 @@ import (
 func main() {
     fmt.Println("hello world")
     mainLoop()
-    drawAll(-100, 1000, 0, 200, 800, 1600)
+    drawAll(-1000, 3000, 0, 4000, 800, 1600)  //100000
 }
 
 // ROADMAP:
@@ -25,13 +25,13 @@ func main() {
 const (
     n_workers         = 16
     n_bodies          = 100
-    sim_steps uint64  = 700
-    sim_step  float64 = 0.2 //seconds
+    sim_steps uint64  = 1250
+    sim_step  float64 = 1 //seconds
 )
 
 // Environment
 const (
-    G = 0.004
+    G = 0.001
     // minimum distance on which calculate gravity (should be removed when introducing collisions)
     min_dist = 1.5
 )
@@ -88,14 +88,12 @@ func simInit() [n_bodies]body {
     bodies := [n_bodies]body{}
 
     // Line
-    for i := 0; i < n_bodies; i++ {
-        if i == 0 {
-            bodies[i] = body{x: 500, y: 40, mass: 10000, vx: -0.7}
-        } else if i == 1 {
-            bodies[i] = body{x: 350, y: 80, mass: 10000, vx: 0.7, vy: -0.4}
-        } else {
-            bodies[i] = body{x: offset + step*float64(i), y: offset, mass: 1.0, vx: 1, vy: 0}
-        }
+    bodies[0] = body{x: 500, y: 50, mass: 100000, vx: 3}
+    bodies[1] = body{x: 480, y: 80, mass: 1000, vx: 4, vy: 0.0}
+    bodies[2] = body{x: 500, y: 1800, mass: 100000000, vx: 0, vy: 0}
+    for i := 3; i < n_bodies; i++ {
+        bodies[i] = body{x: offset+300 + step*float64(i % 20), y: offset + float64(i / 20)*step, mass: 1.0, vx: 1, vy: 0}
+        //fmt.Println(step*float64(i % 20), float64(i / 20)*step)
     }
     // Square
     /*
@@ -127,7 +125,7 @@ func mainLoop() {
 }
 
 func step(i_step uint64, bodies *[n_bodies]body, bodies_next *[n_bodies]body) {
-    fmt.Println("Starting step", i_step)
+    fmt.Println("Simulating step", i_step)
     indices := make(chan int)
     populateRange(indices, n_bodies)
 
