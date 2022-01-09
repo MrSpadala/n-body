@@ -13,6 +13,7 @@ import (
 func main() {
     fmt.Println("hello world")
     mainLoop()
+    drawAll(-100, 1000, 0, 200, 800, 1600)
 }
 
 // ROADMAP:
@@ -24,13 +25,13 @@ func main() {
 const (
     n_workers         = 16
     n_bodies          = 100
-    sim_steps uint64  = 400
-    sim_step  float64 = 0.1 //seconds
+    sim_steps uint64  = 700
+    sim_step  float64 = 0.2 //seconds
 )
 
 // Environment
 const (
-    G = 1.5
+    G = 0.004
     // minimum distance on which calculate gravity (should be removed when introducing collisions)
     min_dist = 1.5
 )
@@ -85,19 +86,28 @@ func simInit() [n_bodies]body {
     const offset float64 = 20
     const step float64 = 5
     bodies := [n_bodies]body{}
+
+    // Line
+    for i := 0; i < n_bodies; i++ {
+        if i == 0 {
+            bodies[i] = body{x: 500, y: 40, mass: 10000, vx: -0.7}
+        } else if i == 1 {
+            bodies[i] = body{x: 350, y: 80, mass: 10000, vx: 0.7, vy: -0.4}
+        } else {
+            bodies[i] = body{x: offset + step*float64(i), y: offset, mass: 1.0, vx: 1, vy: 0}
+        }
+    }
+    // Square
+    /*
     if n_bodies % 5 != 0 {
         panic("divisible by 5")
     }
-    // Line
-    for i := 0; i < n_bodies; i++ {
-        bodies[i] = body{x: offset + step*float64(i), y: offset, mass: 1.0}
-    }
-    // Square
-    /*for i := 0; i < 5; i++ {
+    for i := 0; i < 5; i++ {
         for j := 0; j < n_bodies / 5; j++ {
             bodies[i + j*5] = body{x: (offset + step*float64(j))/4, y: offset + step*float64(i), mass: 1.0}
         }
-    }*/
+    }
+    */
     return bodies
 }
 
@@ -112,11 +122,8 @@ func mainLoop() {
         step(i, &bodies, &bodies_next)
 
         bodies = bodies_next
-        bodies[0].print()
         bodies_next = [n_bodies]body{}
     }
-
-    drawAll(0, 1000, 0, 40, 400, 800)
 }
 
 func step(i_step uint64, bodies *[n_bodies]body, bodies_next *[n_bodies]body) {
