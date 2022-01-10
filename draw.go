@@ -38,7 +38,7 @@ func drawStep(i_step uint64, worker_c chan bool, x_start float64, x_end float64,
 		y_start float64, y_end float64, h int, w int) {
 	defer func() { worker_c <- true }()
 
-	if i_step % 20 == 0{
+	if i_step%20 == 0 {
 		fmt.Println("Rendering step", i_step)
 	}
 
@@ -87,7 +87,7 @@ func drawStep(i_step uint64, worker_c chan bool, x_start float64, x_end float64,
 				} else if i_body == 2 {
 					img.Set(x+dx, y+dy, color.RGBA{0xff, 0x0, 0x0, 0xff})
 				} else {
-					//img.Set(x+dx, y+dy, color.White)
+					img.Set(x+dx, y+dy, color.White)
 				}
 			}
 		}

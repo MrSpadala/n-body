@@ -13,7 +13,7 @@ import (
 func main() {
     fmt.Println("hello world")
     mainLoop()
-    drawAll(-1000, 3000, 0, 4000, 800, 1600)  //100000
+    drawAll(-1000, 3000, 0, 4000, 800, 1600) //100000
 }
 
 // ROADMAP:
@@ -25,8 +25,8 @@ func main() {
 const (
     n_workers         = 16
     n_bodies          = 100
-    sim_steps uint64  = 1250
-    sim_step  float64 = 1 //seconds
+    sim_steps uint64  = 700
+    sim_step  float64 = 2 //seconds
 )
 
 // Environment
@@ -92,19 +92,19 @@ func simInit() [n_bodies]body {
     bodies[1] = body{x: 480, y: 80, mass: 1000, vx: 4, vy: 0.0}
     bodies[2] = body{x: 500, y: 1800, mass: 100000000, vx: 0, vy: 0}
     for i := 3; i < n_bodies; i++ {
-        bodies[i] = body{x: offset+300 + step*float64(i % 20), y: offset + float64(i / 20)*step, mass: 1.0, vx: 1, vy: 0}
+        bodies[i] = body{x: offset + 300 + step*float64(i%20), y: offset + float64(i/20)*step, mass: 1.0, vx: 1, vy: 0}
         //fmt.Println(step*float64(i % 20), float64(i / 20)*step)
     }
     // Square
     /*
-    if n_bodies % 5 != 0 {
-        panic("divisible by 5")
-    }
-    for i := 0; i < 5; i++ {
-        for j := 0; j < n_bodies / 5; j++ {
-            bodies[i + j*5] = body{x: (offset + step*float64(j))/4, y: offset + step*float64(i), mass: 1.0}
-        }
-    }
+       if n_bodies % 5 != 0 {
+           panic("divisible by 5")
+       }
+       for i := 0; i < 5; i++ {
+           for j := 0; j < n_bodies / 5; j++ {
+               bodies[i + j*5] = body{x: (offset + step*float64(j))/4, y: offset + step*float64(i), mass: 1.0}
+           }
+       }
     */
     return bodies
 }
@@ -125,9 +125,9 @@ func mainLoop() {
 }
 
 func step(i_step uint64, bodies *[n_bodies]body, bodies_next *[n_bodies]body) {
-    if i_step % 20 == 0{
+    if i_step%20 == 0 {
         fmt.Println("Simulating step", i_step)
-    }    
+    }
 
     indices := make(chan int)
     populateRange(indices, n_bodies)
@@ -179,11 +179,12 @@ func dump(i_step uint64, bodies *[n_bodies]body) {
         bodies_json[i] = bodies[i].tobodyJson()
     }
     f, e := os.Create("output/steps/" + strconv.FormatUint(i_step, 10) + ".json")
-    defer f.Close()
     if e != nil {
         panic("err in open file")
     }
+    defer f.Close()
     w := bufio.NewWriter(f)
+    defer w.Flush()
     data, e := json.Marshal(bodies_json)
     if e != nil {
         panic("err in json marshalling")
