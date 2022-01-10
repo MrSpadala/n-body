@@ -13,7 +13,7 @@ import (
 func main() {
     fmt.Println("hello world")
     mainLoop()
-    drawAll(-1000, 3000, 0, 4000, 800, 1600) //100000
+    drawAll(-1000, 3000, 0, 4000) //100000
 }
 
 // ROADMAP:
@@ -24,7 +24,7 @@ func main() {
 // Simulation
 const (
     n_workers         = 16
-    n_bodies          = 100
+    n_bodies          = 1000
     sim_steps uint64  = 700
     sim_step  float64 = 2 //seconds
 )
@@ -34,6 +34,12 @@ const (
     G = 0.001
     // minimum distance on which calculate gravity (should be removed when introducing collisions)
     min_dist = 1.5
+)
+
+// Image
+const (
+    h = 800
+    w = 1600
 )
 
 type body struct {

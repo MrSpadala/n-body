@@ -15,7 +15,7 @@ const (
 	body_size = 1
 )
 
-func drawAll(x_start float64, x_end float64, y_start float64, y_end float64, h int, w int) {
+func drawAll(x_start float64, x_end float64, y_start float64, y_end float64) {
 	if x_start >= x_end || y_start >= y_end {
 		panic("Bad x,y references")
 	}
@@ -29,13 +29,12 @@ func drawAll(x_start float64, x_end float64, y_start float64, y_end float64, h i
 
 	for i_step := uint64(0); i_step < sim_steps; i_step++ {
 		<-worker_c
-		go drawStep(i_step, worker_c,
-			x_start, x_end, y_start, y_end, h, w)
+		go drawStep(i_step, worker_c, x_start, x_end, y_start, y_end)
 	}
 }
 
 func drawStep(i_step uint64, worker_c chan bool, x_start float64, x_end float64,
-		y_start float64, y_end float64, h int, w int) {
+	y_start float64, y_end float64) {
 	defer func() { worker_c <- true }()
 
 	if i_step%20 == 0 {
@@ -57,18 +56,21 @@ func drawStep(i_step uint64, worker_c chan bool, x_start float64, x_end float64,
 	bodies_json := [n_bodies]bodyJson{}
 	json.Unmarshal(data, &bodies_json)
 
+	// Mantain a separate matrix for pixels, since image has no Get method
+	pixels := [(h+1) * (w+1)]color.RGBA{}
+
 	upLeft := image.Point{0, 0}
 	lowRight := image.Point{w, h}
 	img := image.NewRGBA(image.Rectangle{upLeft, lowRight})
 
-	// ugly as f
+	// Black background. ugly as f
 	for x := 0; x < w; x++ {
 		for y := 0; y < h; y++ {
-			img.Set(x, y, color.Black)
+			pixels[x*h+y] = color.RGBA{0, 0, 0, 0xff}
 		}
 	}
 
-	for i_body, body := range bodies_json {
+	for _, body := range bodies_json {
 		if body.X >= x_end || body.Y >= y_end {
 			continue
 		}
@@ -78,18 +80,49 @@ func drawStep(i_step uint64, worker_c chan bool, x_start float64, x_end float64,
 		x := int(float64(w) * (body.X - x_start) / x_end)
 		y := h - int(float64(h)*(body.Y-y_start)/y_end)
 
+		const c_step = uint8(250)
 		for dx := -body_size; dx <= body_size; dx++ {
 			for dy := -body_size; dy <= body_size; dy++ {
-				if i_body == 0 {
-					img.Set(x+dx, y+dy, color.RGBA{0xff, 0xff, 0x0, 0xff})
-				} else if i_body == 1 {
-					img.Set(x+dx, y+dy, color.RGBA{0x0, 0xff, 0x0, 0xff})
-				} else if i_body == 2 {
-					img.Set(x+dx, y+dy, color.RGBA{0xff, 0x0, 0x0, 0xff})
+				i_pix := (x+dx)*h+y+dy
+				if i_pix < 0 || i_pix >= (h+1)*(w+1) {
+					continue
+				}
+				pix := &(pixels[i_pix])
+				if pix.B == 0xff {
+					if pix.G == 0xff {
+						if pix.R == 0xff {
+							// do nothing
+						} else {
+							if pix.R+c_step > 0xff {
+								pix.R = 0xff
+							} else {
+								pix.R += c_step
+							}
+						}
+					} else {
+						if pix.G+c_step > 0xff {
+							pix.R = pix.G + c_step - 0xff
+							pix.G = 0xff
+						} else {
+							pix.G += c_step
+						}
+					}
 				} else {
-					img.Set(x+dx, y+dy, color.White)
+					if pix.B+c_step > 0xff {
+						pix.G = pix.B + c_step - 0xff
+						pix.B = 0xff
+					} else {
+						pix.B += c_step
+					}
 				}
 			}
+		}
+	}
+
+	// Draw pixels on image
+	for x := 0; x < w; x++ {
+		for y := 0; y < h; y++ {
+			img.Set(x, y, pixels[x*h+y])
 		}
 	}
 
