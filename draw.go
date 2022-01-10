@@ -35,11 +35,14 @@ func drawAll(x_start float64, x_end float64, y_start float64, y_end float64, h i
 }
 
 func drawStep(i_step uint64, worker_c chan bool, x_start float64, x_end float64,
-	y_start float64, y_end float64, h int, w int) {
+		y_start float64, y_end float64, h int, w int) {
 	defer func() { worker_c <- true }()
 
+	if i_step % 20 == 0{
+		fmt.Println("Rendering step", i_step)
+	}
+
 	stepFpath := "output/steps/" + strconv.FormatUint(i_step, 10) + ".json"
-	fmt.Println("Rendering step", i_step)
 	file, err := os.Open(stepFpath)
 	if err != nil {
 		panic("err in open file for reading")
@@ -94,6 +97,7 @@ func drawStep(i_step uint64, worker_c chan bool, x_start float64, x_end float64,
 	if err != nil {
 		panic("err opening image to write")
 	}
+	defer f.Close()
 
 	png.Encode(f, img)
 }

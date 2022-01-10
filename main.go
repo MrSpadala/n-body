@@ -125,7 +125,10 @@ func mainLoop() {
 }
 
 func step(i_step uint64, bodies *[n_bodies]body, bodies_next *[n_bodies]body) {
-    fmt.Println("Simulating step", i_step)
+    if i_step % 20 == 0{
+        fmt.Println("Simulating step", i_step)
+    }    
+
     indices := make(chan int)
     populateRange(indices, n_bodies)
 
