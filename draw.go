@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strconv"
+	"sync"
 )
 
 const (
@@ -27,17 +28,21 @@ func drawAll(x_start float64, x_end float64, y_start float64, y_end float64) {
 		}
 	}()
 
+	var wg sync.WaitGroup
 	for i_step := uint64(0); i_step < sim_steps; i_step++ {
 		<-worker_c
-		go drawStep(i_step, worker_c, x_start, x_end, y_start, y_end)
+		wg.Add(1)
+		go drawStep(i_step, worker_c, x_start, x_end, y_start, y_end, &wg)
 	}
+	wg.Wait()
 }
 
 func drawStep(i_step uint64, worker_c chan bool, x_start float64, x_end float64,
-	y_start float64, y_end float64) {
+	y_start float64, y_end float64, wg *sync.WaitGroup) {
 	defer func() { worker_c <- true }()
+	defer func() { wg.Done() }()
 
-	if i_step%20 == 0 {
+	if i_step%log_step_render == 0 {
 		fmt.Println("Rendering step", i_step)
 	}
 
@@ -77,10 +82,10 @@ func drawStep(i_step uint64, worker_c chan bool, x_start float64, x_end float64,
 		if body.X < x_start || body.Y < y_start {
 			continue
 		}
-		x := int(float64(w) * (body.X - x_start) / x_end)
-		y := h - int(float64(h)*(body.Y-y_start)/y_end)
+		x := int(float64(w) * (body.X - x_start) / (x_end - x_start))
+		y := h - int(float64(h)*(body.Y-y_start)/(y_end-y_start))
 
-		const c_step = uint8(250)
+		const c_step = uint8(129)
 		for dx := -body_size; dx <= body_size; dx++ {
 			for dy := -body_size; dy <= body_size; dy++ {
 				i_pix := (x+dx)*h + y + dy

@@ -13,7 +13,7 @@ import (
 func main() {
     fmt.Println("hello world")
     mainLoop()
-    drawAll(-1000, 3000, 0, 4000) //100000
+    drawAll(0, 2000, 1000, 2000) //100000
 }
 
 // ROADMAP:
@@ -23,15 +23,15 @@ func main() {
 
 // Simulation
 const (
-    n_workers         = 16
-    n_bodies          = 1000
-    sim_steps uint64  = 700
-    sim_step  float64 = 2 //seconds
+    n_workers         = 12
+    n_bodies          = 20000
+    sim_steps uint64  = 10000
+    sim_step  float64 = 0.5 //seconds
 )
 
 // Environment
 const (
-    G = 0.001
+    G = 0.000013
     // minimum distance on which calculate gravity (should be removed when introducing collisions)
     min_dist = 1.5
 )
@@ -40,6 +40,12 @@ const (
 const (
     h = 800
     w = 1600
+)
+
+// Misc
+const (
+    log_step_sim = 1
+    log_step_render = 1
 )
 
 type body struct {
@@ -93,14 +99,26 @@ func simInit() [n_bodies]body {
     const step float64 = 5
     bodies := [n_bodies]body{}
 
-    // Line
-    bodies[0] = body{x: 500, y: 50, mass: 100000, vx: 3}
-    bodies[1] = body{x: 480, y: 80, mass: 1000, vx: 4, vy: 0.0}
-    bodies[2] = body{x: 500, y: 1800, mass: 100000000, vx: 0, vy: 0}
-    for i := 3; i < n_bodies; i++ {
-        bodies[i] = body{x: offset + 300 + step*float64(i%20), y: offset + float64(i/20)*step, mass: 1.0, vx: 1, vy: 0}
-        //fmt.Println(step*float64(i % 20), float64(i / 20)*step)
+    bodies_ := RotatingDisc(5, 400, 1500, 0.015*math.Pi, n_bodies)
+
+    for i := 0; i < n_bodies; i++ {
+        bodies[i] = bodies_[i]
     }
+
+    // Three masses
+    /*
+       bodies[0] = body{x: 500, y: 50, mass: 100000, vx: 3}
+       bodies[1] = body{x: 480, y: 80, mass: 1000, vx: 4, vy: 0.0}
+       bodies[2] = body{x: 500, y: 1800, mass: 100000000, vx: 0, vy: 0}
+    */
+
+    // Line
+    /*
+       for i := 0; i < n_bodies; i++ {
+           bodies[i] = body{x: offset + 300 + step*float64(i%20), y: offset + float64(i/20)*step, mass: 1.0, vx: 1, vy: 0}
+       }
+    */
+
     // Square
     /*
        if n_bodies % 5 != 0 {
@@ -131,7 +149,7 @@ func mainLoop() {
 }
 
 func step(i_step uint64, bodies *[n_bodies]body, bodies_next *[n_bodies]body) {
-    if i_step%20 == 0 {
+    if i_step%log_step_sim == 0 {
         fmt.Println("Simulating step", i_step)
     }
 
@@ -151,13 +169,12 @@ func calcGravity(indices chan int, bodies *[n_bodies]body, bodies_next *[n_bodie
     for i_body := range indices {
         var fx float64 = 0
         var fy float64 = 0
+        b_i := bodies[i_body]
         for j_body := 0; j_body < n_bodies; j_body++ {
-            if j_body == i_body {
-                continue
-            }
-            tmpx := bodies[i_body].x - bodies[j_body].x
-            tmpy := bodies[i_body].y - bodies[j_body].y
-            tmpG := -G * bodies[i_body].mass * bodies[j_body].mass
+            b_j := bodies[j_body]
+            tmpx := b_i.x - b_j.x
+            tmpy := b_i.y - b_j.y
+            tmpG := -G * b_i.mass * b_j.mass
             tmpDen := math.Pow(math.Abs(tmpx), 3) + math.Pow(math.Abs(tmpy), 3)
             tmpDen = math.Max(tmpDen, min_dist)
             fx += (tmpG / tmpDen) * tmpx
