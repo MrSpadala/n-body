@@ -1,0 +1,1 @@
+ffmpeg -framerate 24 -i output/imgs/%09d.png output/output.mp4
