@@ -12,8 +12,8 @@ import (
 
 func main() {
     fmt.Println("hello world")
-    mainLoop()
-    drawAll(0, 2000, 1000, 2000) //100000
+    //mainLoop()
+    drawAll(380, 420, 1480, 1520)
 }
 
 // ROADMAP:
@@ -23,9 +23,9 @@ func main() {
 
 // Simulation
 const (
-    n_workers         = 12
-    n_bodies          = 20000
-    sim_steps uint64  = 10000
+    n_workers         = 16
+    n_bodies          = 50000
+    sim_steps uint64  = 750
     sim_step  float64 = 0.5 //seconds
 )
 
@@ -38,14 +38,14 @@ const (
 
 // Image
 const (
-    h = 800
-    w = 1600
+    h = 900
+    w = 900
 )
 
 // Misc
 const (
     log_step_sim = 1
-    log_step_render = 1
+    log_step_render = 20
 )
 
 type body struct {
