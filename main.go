@@ -13,7 +13,7 @@ import (
 func main() {
     fmt.Println("hello world")
     //mainLoop()
-    drawAll(380, 420, 1480, 1520)
+    drawAll(370, 430, 1470, 1530)
 }
 
 // ROADMAP:
@@ -38,8 +38,8 @@ const (
 
 // Image
 const (
-    h = 900
-    w = 900
+    h = 1000
+    w = 1000
 )
 
 // Misc
