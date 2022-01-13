@@ -1,12 +1,12 @@
 package main
 
 import (
-	"encoding/json"
+	"bufio"
+	"encoding/binary"
 	"fmt"
 	"image"
 	"image/color"
 	"image/png"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"sync"
@@ -46,20 +46,19 @@ func drawStep(i_step uint64, worker_c chan bool, x_start float64, x_end float64,
 		fmt.Println("Rendering step", i_step)
 	}
 
-	stepFpath := "output/steps/" + strconv.FormatUint(i_step, 10) + ".json"
+	stepFpath := "output/steps/" + strconv.FormatUint(i_step, 10) + ".bin"
 	file, err := os.Open(stepFpath)
 	if err != nil {
 		panic("err in open file for reading")
 	}
 	defer file.Close()
 
-	data, err := ioutil.ReadAll(file)
-	if err != nil {
-		panic("err in reading file")
-	}
-
+	reader := bufio.NewReader(file)
 	points := [n_bodies]point{}
-	json.Unmarshal(data, &points)
+	err = binary.Read(reader, binary.LittleEndian, &points)
+	if err != nil {
+		panic("error in binary reading")
+	}
 
 	// Mantain a separate matrix for pixels, since image has no Get method
 	pixels := [(h + 1) * (w + 1)]color.RGBA{}
