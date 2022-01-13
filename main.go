@@ -171,7 +171,7 @@ func calcGravity(indices chan int, bodies *[n_bodies]body, bodies_next *[n_bodie
         var fy float64 = 0
         b_i := bodies[i_body]
         for j_body := 0; j_body < n_bodies; j_body++ {
-            b_j := bodies[j_body]
+            b_j := &bodies[j_body]
             tmpx := b_i.x - b_j.x
             tmpy := b_i.y - b_j.y
             tmpG := -G * b_i.mass * b_j.mass
@@ -183,12 +183,12 @@ func calcGravity(indices chan int, bodies *[n_bodies]body, bodies_next *[n_bodie
         bodies_next[i_body] = bodies[i_body].copy()
         b := &bodies_next[i_body]
 
-        // Update force on body
-        b.ax = fx / b.mass
-        b.ay = fy / b.mass
+        // Calculate acceleration on body
+        ax := fx / b.mass
+        ay := fy / b.mass
         // Update velocity
-        b.vx += b.ax * sim_step
-        b.vy += b.ay * sim_step
+        b.vx += ax * sim_step
+        b.vy += ay * sim_step
         // Update position
         b.x += b.vx * sim_step
         b.y += b.vy * sim_step
