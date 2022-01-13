@@ -13,7 +13,7 @@ import (
 func main() {
 	fmt.Println("hello world")
 	mainLoop()
-	drawAll(370, 430, 1470, 1530)
+	drawAll(360, 410, 1475, 1525)
 }
 
 // ROADMAP:
@@ -25,8 +25,8 @@ func main() {
 const (
 	n_workers         = 3
 	n_bodies          = 10000
-	sim_steps uint64  = 4
-	sim_step  float64 = 0.5 //seconds
+	sim_steps uint64  = 2
+	sim_step  float64 = 0.2 //seconds
 )
 
 // Environment
@@ -38,8 +38,8 @@ const (
 
 // Image
 const (
-	h = 1000
-	w = 1000
+	h = 900
+	w = 900
 )
 
 // Misc
@@ -91,10 +91,26 @@ func simInit() [n_bodies]body {
 	const step float64 = 5
 	bodies := [n_bodies]body{}
 
-	bodies_ := RotatingDisc(5, 400, 1500, 0.015*math.Pi, n_bodies)
+	// Single rotating disc
+	/*
+		bodies_ := RotatingDisc(5, 400, 1500, 2, 1, 0.015*math.Pi, n_bodies)
+		for i := 0; i < n_bodies; i++ {
+			bodies[i] = bodies_[i]
+		}
+	*/
 
+	// Double rotating disc
+	if n_bodies%2 != 0 {
+		panic("even number of bodies required")
+	}
+	bodies_1 := RotatingDisc(5, 400, 1500, 0, 0, 0.01*math.Pi, n_bodies/2)
+	bodies_2 := RotatingDisc(5, 370, 1500, 0.6, 0, 0.01*math.Pi, n_bodies/2)
 	for i := 0; i < n_bodies; i++ {
-		bodies[i] = bodies_[i]
+		if i < n_bodies/2 {
+			bodies[i] = bodies_1[i]
+		} else {
+			bodies[i] = bodies_2[i-n_bodies/2]
+		}
 	}
 
 	// Three masses

@@ -6,7 +6,7 @@ import (
 	"math/rand"
 )
 
-func RotatingDisc(radius float64, cx float64, cy float64, w float64, n_particles uint64) []body {
+func RotatingDisc(radius float64, cx float64, cy float64, v0x float64, v0y float64, w float64, n_particles uint64) []body {
 	// w angular velocity, in rad/s
 	fmt.Println("Generating rotating disc scene...")
 	res := make([]body, n_particles)
@@ -19,8 +19,8 @@ func RotatingDisc(radius float64, cx float64, cy float64, w float64, n_particles
 
 		x := cx + r*math.Cos(theta)
 		y := cy + r*math.Sin(theta)
-		vx := -v * math.Sin(theta)
-		vy := v * math.Cos(theta)
+		vx := v0x + -v*math.Sin(theta)
+		vy := v0y + v*math.Cos(theta)
 
 		res[i] = body{
 			x:    x,
