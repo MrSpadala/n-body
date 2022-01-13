@@ -53,23 +53,17 @@ type body struct {
     y    float64
     vx   float64
     vy   float64
-    ax   float64
-    ay   float64
     mass float64
 }
 
-type bodyJson struct {
-    X    float64
-    Y    float64
-    Vx   float64
-    Vy   float64
-    Ax   float64
-    Ay   float64
-    Mass float64
+// This struct is only used when exporting on disk the result of a simulation
+type point struct {
+    X float64
+    Y float64
 }
 
-func (b *body) tobodyJson() bodyJson {
-    return bodyJson{X: b.x, Y: b.y, Vx: b.vx, Vy: b.vy, Ax: b.ax, Ay: b.ay, Mass: b.mass}
+func (b *body) toPoint() point {
+    return point{X: b.x, Y: b.y}
 }
 
 func (b *body) print() {
@@ -77,12 +71,10 @@ func (b *body) print() {
     fmt.Println("y ", b.y)
     fmt.Println("vx ", b.vx)
     fmt.Println("vy ", b.vy)
-    fmt.Println("ax ", b.ax)
-    fmt.Println("ay ", b.ay)
 }
 
 func (b *body) copy() body {
-    return body{x: b.x, y: b.y, vx: b.vx, vy: b.vy, ax: b.ax, ay: b.ay, mass: b.mass}
+    return body{x: b.x, y: b.y, vx: b.vx, vy: b.vy, mass: b.mass}
 }
 
 func populateRange(c chan int, n int) {
@@ -197,9 +189,9 @@ func calcGravity(indices chan int, bodies *[n_bodies]body, bodies_next *[n_bodie
 
 func dump(i_step uint64, bodies *[n_bodies]body) {
     // Jsonize bodies at the start of step i_step
-    bodies_json := [n_bodies]bodyJson{}
+    points := [n_bodies]point{}
     for i := 0; i < n_bodies; i++ {
-        bodies_json[i] = bodies[i].tobodyJson()
+        points[i] = bodies[i].toPoint()
     }
     f, e := os.Create("output/steps/" + strconv.FormatUint(i_step, 10) + ".json")
     if e != nil {
@@ -208,7 +200,7 @@ func dump(i_step uint64, bodies *[n_bodies]body) {
     defer f.Close()
     w := bufio.NewWriter(f)
     defer w.Flush()
-    data, e := json.Marshal(bodies_json)
+    data, e := json.Marshal(points)
     if e != nil {
         panic("err in json marshalling")
     }

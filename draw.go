@@ -58,8 +58,8 @@ func drawStep(i_step uint64, worker_c chan bool, x_start float64, x_end float64,
 		panic("err in reading file")
 	}
 
-	bodies_json := [n_bodies]bodyJson{}
-	json.Unmarshal(data, &bodies_json)
+	points := [n_bodies]point{}
+	json.Unmarshal(data, &points)
 
 	// Mantain a separate matrix for pixels, since image has no Get method
 	pixels := [(h + 1) * (w + 1)]color.RGBA{}
@@ -75,7 +75,7 @@ func drawStep(i_step uint64, worker_c chan bool, x_start float64, x_end float64,
 		}
 	}
 
-	for _, body := range bodies_json {
+	for _, body := range points {
 		if body.X >= x_end || body.Y >= y_end {
 			continue
 		}
