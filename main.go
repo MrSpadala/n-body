@@ -2,7 +2,7 @@ package main
 
 import (
 	"bufio"
-	"encoding/json"
+	"encoding/binary"
 	"fmt"
 	"math"
 	"os"
@@ -193,16 +193,15 @@ func dump(i_step uint64, bodies *[n_bodies]body) {
 	for i := 0; i < n_bodies; i++ {
 		points[i] = bodies[i].toPoint()
 	}
-	f, e := os.Create("output/steps/" + strconv.FormatUint(i_step, 10) + ".json")
+	f, e := os.Create("output/steps/" + strconv.FormatUint(i_step, 10) + ".bin")
 	if e != nil {
 		panic("err in open file")
 	}
 	defer f.Close()
 	w := bufio.NewWriter(f)
 	defer w.Flush()
-	data, e := json.Marshal(points)
+	e = binary.Write(w, binary.LittleEndian, points)
 	if e != nil {
-		panic("err in json marshalling")
+		panic("err in binary marshalling")
 	}
-	w.Write(data)
 }
