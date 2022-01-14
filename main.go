@@ -26,9 +26,9 @@ func main() {
 // Simulation
 const (
 	n_workers         = 16    //number of parallel workers
-	n_bodies          = 10000 //number of bodies
-	sim_steps uint64  = 40    //simulation steps
-	sim_step  float64 = 0.2   //duration in secods of each simulation step
+	n_bodies          = 5000 //number of bodies
+	sim_steps uint64  = 60    //simulation steps
+	sim_step  float64 = 0.3   //duration in secods of each simulation step
 )
 
 // Environment
