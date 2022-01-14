@@ -1,3 +1,3 @@
 # Remove output of the simulation and images
-rm output/steps/*
-rm output/imgs/*
+rm output/steps/*.bin
+rm output/imgs/*.png
