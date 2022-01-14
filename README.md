@@ -13,11 +13,11 @@ The angular velocity is low enough so that the disk collapses on itself.
 https://user-images.githubusercontent.com/23057237/149504188-a4eb5245-9395-4c5e-aa8e-44102bb22d73.mp4
 
 ### Expanding rotating disc
-Simulation of 3 * 10^3 particles on a rotating disc. 
+Simulation of 2 * 10^4 particles on a rotating disc. 
 
-The gravity is not enough to keep the disc tight and expands.
+The gravity is not enough to keep the disc tight and it expands.
 
-https://user-images.githubusercontent.com/23057237/149507502-5d6656e2-a726-42f8-bab0-c93827a47106.mp4
+https://user-images.githubusercontent.com/23057237/149547215-89915509-c56d-4967-bea8-a0e009cc933a.mp4
 
 
 ### Three orbiting masses
