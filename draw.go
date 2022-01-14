@@ -13,9 +13,13 @@ import (
 )
 
 const (
-	body_size = 0
+	body_size_increase = 0
 )
 
+/*
+Renderize the simulated steps. The parameters x_start, x_end, y_start, y_end represent the camera.
+Bodies with their position inside the range will be rendered, others will be discarded
+*/
 func drawAll(x_start float64, x_end float64, y_start float64, y_end float64) {
 	if x_start >= x_end || y_start >= y_end {
 		panic("Bad x,y references")
@@ -28,6 +32,7 @@ func drawAll(x_start float64, x_end float64, y_start float64, y_end float64) {
 		}
 	}()
 
+	// Draw multiple steps in parallel. One worker draws a single step.
 	var wg sync.WaitGroup
 	for i_step := uint64(0); i_step < sim_steps; i_step++ {
 		<-worker_c
@@ -35,6 +40,8 @@ func drawAll(x_start float64, x_end float64, y_start float64, y_end float64) {
 		go drawStep(i_step, worker_c, x_start, x_end, y_start, y_end, &wg)
 	}
 	wg.Wait()
+
+	fmt.Println("Rendering finished")
 }
 
 func drawStep(i_step uint64, worker_c chan bool, x_start float64, x_end float64,
@@ -84,9 +91,9 @@ func drawStep(i_step uint64, worker_c chan bool, x_start float64, x_end float64,
 		x := int(float64(w) * (body.X - x_start) / (x_end - x_start))
 		y := h - int(float64(h)*(body.Y-y_start)/(y_end-y_start))
 
-		const c_step = uint8(129)
-		for dx := -body_size; dx <= body_size; dx++ {
-			for dy := -body_size; dy <= body_size; dy++ {
+		const c_step = uint8(254)
+		for dx := -body_size_increase; dx <= body_size_increase; dx++ {
+			for dy := -body_size_increase; dy <= body_size_increase; dy++ {
 				i_pix := (x+dx)*h + y + dy
 				if i_pix < 0 || i_pix >= (h+1)*(w+1) {
 					continue

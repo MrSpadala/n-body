@@ -10,33 +10,34 @@ import (
 	"sync"
 )
 
+/*
+The program is divided into two steps:
+	1. Simulation: the motion of the particles is simulated. At each simulation step,
+		the position of the particles is saved on disk
+	2. Rendering: it reads the files generated during the simulation and generates one image per frame.
+*/
 func main() {
-	fmt.Println("hello world")
+	// Simulation
 	mainLoop()
-	drawAll(360, 410, 1475, 1525)
+	// Rendering
+	drawAll(380, 420, 1480, 1520)
 }
-
-// ROADMAP:
-// 1. simulate gravity
-// 2. basic print on image
-// 3. collisions
 
 // Simulation
 const (
-	n_workers         = 3
-	n_bodies          = 10000
-	sim_steps uint64  = 2
-	sim_step  float64 = 0.2 //seconds
+	n_workers         = 16    //number of parallel workers
+	n_bodies          = 10000 //number of bodies
+	sim_steps uint64  = 40    //simulation steps
+	sim_step  float64 = 0.2   //duration in secods of each simulation step
 )
 
 // Environment
 const (
-	G = 0.000013
-	// minimum distance on which calculate gravity (should be removed when introducing collisions)
-	min_dist = 1.5
+	G        = 0.000013 //gravity constant
+	min_dist = 0.01     //minimum distance of particles on which calculate gravity
 )
 
-// Image
+// Image output heigth and width
 const (
 	h = 900
 	w = 900
@@ -77,6 +78,7 @@ func (b *body) copy() body {
 	return body{x: b.x, y: b.y, vx: b.vx, vy: b.vy, mass: b.mass}
 }
 
+// Function that populates a int channel with numbers from 0 to n-1 and then closes channel
 func populateRange(c chan int, n int) {
 	go func() {
 		for i := 0; i < n; i++ {
@@ -86,32 +88,31 @@ func populateRange(c chan int, n int) {
 	}()
 }
 
+// Initialize bodies for the simulation
 func simInit() [n_bodies]body {
-	const offset float64 = 20
-	const step float64 = 5
 	bodies := [n_bodies]body{}
 
 	// Single rotating disc
-	/*
-		bodies_ := RotatingDisc(5, 400, 1500, 2, 1, 0.015*math.Pi, n_bodies)
-		for i := 0; i < n_bodies; i++ {
-			bodies[i] = bodies_[i]
-		}
-	*/
+	bodies_ := RotatingDisc(5, 400, 1500, 0, 0, 0.015*math.Pi, n_bodies)
+	for i := 0; i < n_bodies; i++ {
+		bodies[i] = bodies_[i]
+	}
 
 	// Double rotating disc
-	if n_bodies%2 != 0 {
-		panic("even number of bodies required")
-	}
-	bodies_1 := RotatingDisc(5, 400, 1500, 0, 0, 0.01*math.Pi, n_bodies/2)
-	bodies_2 := RotatingDisc(5, 370, 1500, 0.6, 0, 0.01*math.Pi, n_bodies/2)
-	for i := 0; i < n_bodies; i++ {
-		if i < n_bodies/2 {
-			bodies[i] = bodies_1[i]
-		} else {
-			bodies[i] = bodies_2[i-n_bodies/2]
+	/*
+		if n_bodies%2 != 0 {
+			panic("even number of bodies required")
 		}
-	}
+		bodies_1 := RotatingDisc(5, 400, 1500, 0, 0, 0.01*math.Pi, n_bodies/2)
+		bodies_2 := RotatingDisc(5, 370, 1500, 0.6, 0, 0.01*math.Pi, n_bodies/2)
+		for i := 0; i < n_bodies; i++ {
+			if i < n_bodies/2 {
+				bodies[i] = bodies_1[i]
+			} else {
+				bodies[i] = bodies_2[i-n_bodies/2]
+			}
+		}
+	*/
 
 	// Three masses
 	/*
@@ -122,9 +123,11 @@ func simInit() [n_bodies]body {
 
 	// Line
 	/*
-	   for i := 0; i < n_bodies; i++ {
-	       bodies[i] = body{x: offset + 300 + step*float64(i%20), y: offset + float64(i/20)*step, mass: 1.0, vx: 1, vy: 0}
-	   }
+		const offset float64 = 20
+		const step float64 = 5
+		for i := 0; i < n_bodies; i++ {
+			bodies[i] = body{x: offset + 300 + step*float64(i%20), y: offset + float64(i/20)*step, mass: 1.0, vx: 1, vy: 0}
+		}
 	*/
 
 	// Square
@@ -141,35 +144,41 @@ func simInit() [n_bodies]body {
 	return bodies
 }
 
+// Simulation loop
 func mainLoop() {
+
 	// Init bodies
 	bodies := simInit()
+	// Keep array of bodies of the next step
 	bodies_next := [n_bodies]body{}
 
-	for i := uint64(0); i < sim_steps; i++ {
-		go dump(i, &bodies)
+	fmt.Println("Simulating", sim_steps, "steps")
+	for i_step := uint64(0); i_step < sim_steps; i_step++ {
+		if i_step%log_step_sim == 0 {
+			fmt.Println("Simulating step", i_step)
+		}
 
-		step(i, &bodies, &bodies_next)
+		// Safe to asynchronously dump the bodies
+		go dump(i_step, &bodies)
 
+		// Channel of indices, one per body. They will be consumed in parallel by the workers
+		indices := make(chan int)
+		populateRange(indices, n_bodies)
+
+		// Launch and wait workers
+		var wg sync.WaitGroup
+		for i := 0; i < n_workers; i++ {
+			wg.Add(1)
+			go calcGravity(indices, &bodies, &bodies_next, &wg)
+		}
+		wg.Wait()
+
+		// Update bodies for the next iteration
 		bodies = bodies_next
 		bodies_next = [n_bodies]body{}
 	}
-}
 
-func step(i_step uint64, bodies *[n_bodies]body, bodies_next *[n_bodies]body) {
-	if i_step%log_step_sim == 0 {
-		fmt.Println("Simulating step", i_step)
-	}
-
-	indices := make(chan int)
-	populateRange(indices, n_bodies)
-
-	var wg sync.WaitGroup
-	for i := 0; i < n_workers; i++ {
-		wg.Add(1)
-		go calcGravity(indices, bodies, bodies_next, &wg)
-	}
-	wg.Wait()
+	fmt.Println("Simulation finished")
 }
 
 func calcGravity(indices chan int, bodies *[n_bodies]body, bodies_next *[n_bodies]body, wg *sync.WaitGroup) {
@@ -203,8 +212,8 @@ func calcGravity(indices chan int, bodies *[n_bodies]body, bodies_next *[n_bodie
 	}
 }
 
+// Dump on disk bodies at the given step as the binary array of structs.
 func dump(i_step uint64, bodies *[n_bodies]body) {
-	// Jsonize bodies at the start of step i_step
 	points := [n_bodies]point{}
 	for i := 0; i < n_bodies; i++ {
 		points[i] = bodies[i].toPoint()
