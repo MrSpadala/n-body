@@ -29,7 +29,7 @@ https://user-images.githubusercontent.com/23057237/149504154-3696ff20-5fc7-469a-
 
 ## Implementation
 
-It runs an algorithm quadratic in the number of particles to calculate the force that one particle exerts on all the other ones. It runs multiple workers in parallel.
+It runs an algorithm quadratic in the number of particles to calculate the force that one particle exerts on all the other ones. It runs multiple workers in parallel. It requires no external dependency
 
 ## How to run
 
